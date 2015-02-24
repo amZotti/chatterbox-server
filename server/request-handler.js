@@ -1,6 +1,5 @@
-
-var messages = []
-
+var messages = [];
+var room1Messages = [];
 
 var requestHandler = function(request, response) {
 
@@ -21,6 +20,20 @@ var requestHandler = function(request, response) {
   } else if (request.url === '/classes/messages' && request.method === 'POST') {
     request.on('data', function(data) {
       messages.push(JSON.parse(data));
+    });
+    statusCode = 201;
+    headers['Content-Type'] = "text/plain";
+    response.writeHead(statusCode, headers);
+    response.end();
+
+ } else if (request.url === '/classes/room1' && request.method === 'GET') {
+    headers['Content-Type'] = "text/plain";
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify(data));
+
+  } else if (request.url === '/classes/room1' && request.method === 'POST') {
+    request.on('data', function(data) {
+      room1Messages.push(JSON.parse(data));
     });
     statusCode = 201;
     headers['Content-Type'] = "text/plain";

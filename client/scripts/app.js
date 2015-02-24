@@ -5,12 +5,13 @@ $(document).ready(function() {
   app.messages = [];
   app.rooms = [];
   app.username = 'default';
-  app.currentRoom = 'room1';
+  app.currentRoom = '';
   app.roomURL = '/classes/'
   app.friends = {};
 
   app.URL = function() {
-    return this.server + '/classes/' + this.currentRoom;
+    var tail = app.currentRoom ? 'room/' + this.currentRoom : 'messages';
+    return this.server + '/classes/' + tail;
   };
 
   app.init = function() {
@@ -120,7 +121,7 @@ $(document).ready(function() {
       //   }
       // });
       // app.messages = app.messages.concat(results);
-      app.displayMessages(JSON.parse(response).results);
+      app.displayMessages(response.results);
 
       // var newRooms = _.pluck(results, 'roomname');
       // newRooms = _.filter(newRooms, function (room) {

@@ -27,74 +27,59 @@ var getMessagesForUrl = function(url) {
   }
 };
 
-var isRoomURL = function(request) {
-  return request.url.substring(0, 13) === '/classes/room';
+var isGET = function(request) {
+  return request.method === 'GET';
+};
+
+var handleGET = function (request, response) {
+  var data = {
+    results : getMessagesForUrl(request.url)
+  };
+  var headers = defaultCorsHeaders;
+  headers['Content-Type'] = "application/json";
+  response.writeHead(200, headers);
+  response.end(JSON.stringify(data));
+};
+
+var isPOST = function(request) {
+  return request.method === 'POST';
+};
+
+var handlePOST = function (request, response) {
+  var message = '';
+  request.on('data', function(data) {
+    message += data;
+  });
+  request.on('end', function () {
+    addMessage(message, request);
+  });
+
+  var headers = defaultCorsHeaders;
+  headers['Content-Type'] = "text/plain";
+  response.writeHead(201, headers);
+  response.end();
 };
 
 var requestHandler = function(request, response) {
 
   console.log("Serving request type " + request.method + " for url " + request.url);
 
-  var statusCode = 200;
-  var headers = defaultCorsHeaders;
-  headers['Content-Type'] = "application/json";
-
   if (request.method === 'OPTIONS') {
-    response.writeHead(statusCode, headers);
+    response.writeHead(200, defaultCorsHeaders);
     response.end();
   }
 
-  // GET -- two urls, both of which return a set of messages
-  // Separate routes from logic
-  // Extract duplicate header setup -- put all the things in functions
-  // /classes/room/roomname
-  // /classes/messages
-
-  var handleGET = function (request, response) {
-    var data = {
-      results : getMessagesForUrl(request.url)
-    };
-    response.writeHead(statusCode, headers);
-    response.end(JSON.stringify(data));
-  };
-
-  if (request.method === 'GET') {
+  if (isGET(request)) {
     handleGET(request, response);
-  } else if (!isRoomURL(request) && request.method === 'POST') {
-    var message = '';
-    request.on('data', function(data) {
-      message += data;
-    });
-    request.on('end', function () {
-      addMessage(message, request);
-    });
 
-    statusCode = 201;
-    headers['Content-Type'] = "text/plain";
-    response.writeHead(statusCode, headers);
-    response.end();
-
-  } else if (isRoomURL(request) && request.method === 'POST') {
-    var message = '';
-    request.on('data', function(data) {
-      message += data;
-    });
-    request.on('end', function () {
-      addMessage(message, request);
-    });
-
-    statusCode = 201;
-    headers['Content-Type'] = "text/plain";
-    response.writeHead(statusCode, headers);
-    response.end();
+  } else if (isPOST(request)) {
+    handlePOST(request, response);
 
   } else {
-
-    statusCode = 404;
+    var headers = defaultCorsHeaders;
     headers['Content-Type'] = "text/plain";
-    response.writeHead(statusCode, headers);
+    response.writeHead(404, headers);
     response.end('could not query request');
-
   }
 
 };
@@ -107,4 +92,6 @@ var defaultCorsHeaders = {
 };
 
 module.exports = requestHandler;
+
+
 

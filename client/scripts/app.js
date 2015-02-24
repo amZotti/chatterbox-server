@@ -48,7 +48,7 @@ $(document).ready(function() {
         return message.roomname === app.currentRoom;
       });
     }
-
+    messageContainer.empty();
     _.each(undisplayedMessages, function (message) {
 
       var $user = $('<span class="username"></span>');
@@ -120,7 +120,7 @@ $(document).ready(function() {
       //   }
       // });
       // app.messages = app.messages.concat(results);
-      app.displayMessages(JSON.parse(response).results[1]);
+      app.displayMessages(JSON.parse(response).results);
 
       // var newRooms = _.pluck(results, 'roomname');
       // newRooms = _.filter(newRooms, function (room) {

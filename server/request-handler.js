@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 var messages = {};
 var all = [];
 
@@ -60,6 +62,36 @@ var handlePOST = function (request, response) {
   response.end();
 };
 
+var isStatic = function(request) {
+  return (request.url === "/" || request.url.substring(0, 7) === "/client");
+};
+
+var serveStatic = function(request, response) {
+  var headers = defaultCorsHeaders;
+
+  if (request.url === "/") {
+    request.url = "/client/index.html";
+  }
+  request.url = '.' + request.url;
+  fs.readFile(request.url, function(error, data) {
+    console.log(error, data);
+    if (error) {
+      response.end("Error!");
+    } else {
+
+      if (/(\.js)$/.test(request.url)) {
+        headers['Content-Type'] = "text/javascript";
+      } else if (/(\.css)$/.test(request.url)) {
+        headers['Content-Type'] = "text/css";
+      } else {
+        headers['Content-Type'] = "text/html";
+      }
+      response.writeHead(200, headers);
+      return response.end(data);
+    }
+  });
+};
+
 var requestHandler = function(request, response) {
 
   console.log("Serving request type " + request.method + " for url " + request.url);
@@ -69,7 +101,10 @@ var requestHandler = function(request, response) {
     response.end();
   }
 
-  if (isGET(request)) {
+  //is this request for a static resource?
+  if (isStatic(request)) {
+    serveStatic(request, response);
+  } else if (isGET(request)) {
     handleGET(request, response);
 
   } else if (isPOST(request)) {

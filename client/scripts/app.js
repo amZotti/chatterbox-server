@@ -1,13 +1,17 @@
 var app = {};
 $(document).ready(function() {
-// YOUR CODE HERE:
-  app.server = "https://api.parse.com/1/classes/chatterbox";
+  app.server = "http://localhost:3000";
   app.initialLoad = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   app.messages = [];
   app.rooms = [];
-  app.username = '';
-  app.currentRoom = '';
+  app.username = 'default';
+  app.currentRoom = 'room1';
+  app.roomURL = '/classes/'
   app.friends = {};
+
+  app.URL = function() {
+    return this.server + '/classes/' + this.currentRoom;
+  };
 
   app.init = function() {
 
@@ -21,7 +25,7 @@ $(document).ready(function() {
 
   app.send = function(message) {
     $.ajax({
-      url: app.server,
+      url: app.URL(),
       type: 'POST',
       data: JSON.stringify(message),
       contentType: 'application/json',
@@ -50,9 +54,9 @@ $(document).ready(function() {
       var $user = $('<span class="username"></span>');
       $user.text(message.username);
 
-      var time = message.date;
-      var $timestamp = $('<span class="timestamp"></span>');
-      $timestamp.text(time.toLocaleDateString() + ' ' + time.toLocaleTimeString());
+      // var time = message.date;
+      // var $timestamp = $('<span class="timestamp"></span>');
+      // $timestamp.text(time.toLocaleDateString() + ' ' + time.toLocaleTimeString());
 
       // var $id = $('<span></span>');
       // $id.text(message.objectId);
@@ -68,7 +72,7 @@ $(document).ready(function() {
 
       var $fullMessage = $('<div class="chat"></div>');
       $fullMessage.append($user);
-      $fullMessage.append($timestamp);
+      // $fullMessage.append($timestamp);
       // $fullMessage.append($id);
       $fullMessage.append($messageHtml);
       messageContainer.prepend($fullMessage);
@@ -84,45 +88,45 @@ $(document).ready(function() {
   //  restrict with url + '?' + $.param({where: {createdAt: {__type: 'Date', iso: message.createdAt}}, ... }})
 
   app.fetch = function() {
-    var fetchFrom = app.messages.length > 0
-                            ? app.messages[app.messages.length - 1].createdAt
-                            : app.initialLoad;
-    var params =  $.param({
-      where: {
-        createdAt: {
-          $gt: {
-            __type: 'Date',
-            iso: fetchFrom
-          }
-        }
-      }
-    });
+    // var fetchFrom = app.messages.length > 0
+    //                         ? app.messages[app.messages.length - 1].createdAt
+    //                         : app.initialLoad;
+    // var params =  $.param({
+    //   where: {
+    //     createdAt: {
+    //       $gt: {
+    //         __type: 'Date',
+    //         iso: fetchFrom
+    //       }
+    //     }
+    //   }
+    // });
 
-    $.get(app.server, params, function (response) {
+    $.get(app.URL(), function (response) {
       // console.log(response);
-      var results = _.filter(response.results, function(message) {
-        return message.text !== undefined && message.username !== undefined;
-      });
-      _.each(results, function (message) {
-        message.date = new Date(message.createdAt);
-      });
-      results.sort(function (a, b) {
-        if (a.date < b.date) {
-          return -1;
-        } else if (a.date > b.date) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-      app.messages = app.messages.concat(results);
-      app.displayMessages(results);
+      // var results = _.filter(response.results, function(message) {
+      //   return message.text !== undefined && message.username !== undefined;
+      // });
+      // _.each(results, function (message) {
+      //   message.date = new Date(message.createdAt);
+      // });
+      // results.sort(function (a, b) {
+      //   if (a.date < b.date) {
+      //     return -1;
+      //   } else if (a.date > b.date) {
+      //     return 1;
+      //   } else {
+      //     return 0;
+      //   }
+      // });
+      // app.messages = app.messages.concat(results);
+      app.displayMessages(JSON.parse(response).results[1]);
 
-      var newRooms = _.pluck(results, 'roomname');
-      newRooms = _.filter(newRooms, function (room) {
-        return room; //filter undefined and empty string
-      });
-      app.rooms = _.uniq(app.rooms.concat(newRooms));
+      // var newRooms = _.pluck(results, 'roomname');
+      // newRooms = _.filter(newRooms, function (room) {
+      //   return room; //filter undefined and empty string
+      // });
+      // app.rooms = _.uniq(app.rooms.concat(newRooms));
       app.updateRooms();
     });
     setTimeout(app.fetch, 5000);

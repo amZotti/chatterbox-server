@@ -1,14 +1,14 @@
 var messages = {};
 var all = [];
 
-var getRoomName = function(request) {
-  return request.url.substring(8);
+var getRoomName = function(url) {
+  return url.substring(8);
 };
 
 var addMessage = function(message, request) {
   message = JSON.parse(message);
   all.push(message);
-  var roomname = getRoomName(request);
+  var roomname = getRoomName(request.url);
   if (messages[roomname]) {
     messages[roomname].push(message);
   } else {
@@ -16,22 +16,16 @@ var addMessage = function(message, request) {
   }
 };
 
-var getMessages = function(roomname) {
-  if (roomname === "") {
+var getMessagesForUrl = function(url) {
+  var roomname = getRoomName(url);
+  if (roomname === "/messages") {
     return all;
-  } else if (messages[roomname] ) {
+  } else if (messages[roomname]) {
     return messages[roomname];
-  } else if (roomname) {
-    messages[roomname] = [];
-    return messages[roomname];
-   } else {
-    console.log(roomname);
-    return false;
+  } else {
+    return [];
   }
 };
-
-// /classes/publicRoom
-// message = { roomname: privateRoom }
 
 var isRoomURL = function(request) {
   return request.url.substring(0, 13) === '/classes/room';
@@ -43,7 +37,7 @@ var requestHandler = function(request, response) {
 
   var statusCode = 200;
   var headers = defaultCorsHeaders;
-  var data = {};
+  headers['Content-Type'] = "application/json";
 
   if (request.method === 'OPTIONS') {
     response.writeHead(statusCode, headers);
@@ -56,12 +50,16 @@ var requestHandler = function(request, response) {
   // /classes/room/roomname
   // /classes/messages
 
-  if (!isRoomURL(request) && request.method === 'GET') {
-    data.results = getMessages('');
-    headers['Content-Type'] = "application/json";
+  var handleGET = function (request, response) {
+    var data = {
+      results : getMessagesForUrl(request.url)
+    };
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(data));
+  };
 
+  if (request.method === 'GET') {
+    handleGET(request, response);
   } else if (!isRoomURL(request) && request.method === 'POST') {
     var message = '';
     request.on('data', function(data) {
@@ -75,12 +73,6 @@ var requestHandler = function(request, response) {
     headers['Content-Type'] = "text/plain";
     response.writeHead(statusCode, headers);
     response.end();
-
-  } else if (isRoomURL(request) && request.method === 'GET') {
-    data.results = getMessages(getRoomName(request));
-    headers['Content-Type'] = "application/json";
-    response.writeHead(statusCode, headers);
-    response.end(JSON.stringify(data));
 
   } else if (isRoomURL(request) && request.method === 'POST') {
     var message = '';
